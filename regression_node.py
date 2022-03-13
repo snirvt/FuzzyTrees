@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error
 import warnings
 warnings.filterwarnings("error")
 
-class Node():
+class RegressionNode():
     def __init__(self, X, y, X_val=None, y_val = None, depth=0, max_depth=0, min_samples_split=2, min_impurity_decrease=0.0 ) -> None:
         self.X = X
         self.y = y
@@ -80,7 +80,6 @@ class Node():
             df_val = self.get_df(self.X_val.copy(), self.y_val)
             mse_split_val, _, _ = self.get_split_error(df_val, best_feature, best_value, best_left_val, best_right_val)
             base_impurity_decrease_val = self.mse_val - mse_split_val
-            print(base_impurity_decrease_val)
             if base_impurity_decrease_val < 0:
                 best_feature, best_value = None, None
         return (best_feature, best_value)
@@ -106,14 +105,14 @@ class Node():
                     right_X_val = right_df_val.drop('Y', axis=1)
                     right_y_val = right_df_val['Y'].values.tolist()
                 # Creating the left and right nodes
-                left = Node(left_df.drop('Y', axis=1), left_df['Y'].values.tolist(), X_val =  left_X_val, 
+                left = RegressionNode(left_df.drop('Y', axis=1), left_df['Y'].values.tolist(), X_val =  left_X_val, 
                             y_val = left_y_val, depth=self.depth + 1, max_depth=self.max_depth,  
                             min_samples_split=self.min_samples_split
                             )
                 self.left = left 
                 self.left.grow_tree()
 
-                right = Node(right_df.drop('Y', axis=1), right_df['Y'].values.tolist(), X_val = right_X_val, 
+                right = RegressionNode(right_df.drop('Y', axis=1), right_df['Y'].values.tolist(), X_val = right_X_val, 
                              y_val = right_y_val, depth=self.depth + 1, max_depth=self.max_depth,
                              min_samples_split=self.min_samples_split
                             )
@@ -125,12 +124,12 @@ class Node():
             self.pred = np.mean(self.y)
         return self.pred
     
-    def predict(self, X, max_height = None):
-        if (self.left is not None and max_height is None) or (self.left is not None and self.depth <= max_height):
+    def predict(self, X, max_depth = None):
+        if (self.left is not None and max_depth is None) or (self.left is not None and self.depth <= max_depth):
             left_idx = X[self.best_feature] < self.best_value
-            pred_left = self.left.predict(X[left_idx], max_height)
+            pred_left = self.left.predict(X[left_idx], max_depth)
             right_idx = X[self.best_feature] >= self.best_value
-            pred_right = self.right.predict(X[right_idx], max_height)
+            pred_right = self.right.predict(X[right_idx], max_depth)
         else:
             return np.repeat(self.predict_mean(), X.shape[0])
         res = np.zeros(X.shape[0])
