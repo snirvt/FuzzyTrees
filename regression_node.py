@@ -17,6 +17,7 @@ class RegressionNode():
         self.min_samples_split = min_samples_split
         self.min_impurity_decrease = min_impurity_decrease
         self.pred = None
+        self.pred_all = None
         self.best_feature = None
         self.best_value = None
         self.mse = mean_squared_error(y, [self.predict_mean()]*len(y))
@@ -42,7 +43,7 @@ class RegressionNode():
         left_y = X[X[feature]<value]['Y'].values # Getting the left and right ys
         right_y = X[X[feature]>=value]['Y'].values
         if len(left_y) == 0 or len(right_y) == 0:
-            return float('inf')
+            return float('inf'), None, None
         
         if left_val is None and right_val is None: # non validation
             mean_left_y = np.mean(left_y)
@@ -119,19 +120,23 @@ class RegressionNode():
                 self.right = right
                 self.right.grow_tree()
         
-    def predict_mean(self):
+    def predict_mean(self, include_val = False):
+        if include_val:
+            if self.pred_all is None:
+                self.pred_all = np.mean(self.y+self.y_val)
+            return self.pred_all
         if self.pred is None:
             self.pred = np.mean(self.y)
         return self.pred
     
-    def predict(self, X, max_depth = None):
+    def predict(self, X, include_val = False, max_depth = None):
         if (self.left is not None and max_depth is None) or (self.left is not None and self.depth <= max_depth):
             left_idx = X[self.best_feature] < self.best_value
-            pred_left = self.left.predict(X[left_idx], max_depth)
+            pred_left = self.left.predict(X[left_idx], include_val, max_depth)
             right_idx = X[self.best_feature] >= self.best_value
-            pred_right = self.right.predict(X[right_idx], max_depth)
+            pred_right = self.right.predict(X[right_idx], include_val, max_depth)
         else:
-            return np.repeat(self.predict_mean(), X.shape[0])
+            return np.repeat(self.predict_mean(include_val), X.shape[0])
         res = np.zeros(X.shape[0])
         res[left_idx] = pred_left
         res[right_idx] = pred_right

@@ -1,7 +1,7 @@
 import numpy as np
+from sklearn.base import BaseEstimator, RegressorMixin 
 
-
-class Tree():
+class Tree(BaseEstimator,RegressorMixin):
     def __init__(self, Node_class, max_depth=None, min_samples_split=2, min_impurity_decrease=0.0) -> None:
         self.Node_class = Node_class
         self.node = None
@@ -25,7 +25,7 @@ class Tree():
                                     min_impurity_decrease = self.min_impurity_decrease)
         self.node.grow_tree()
     
-    def predict(self, X, max_depth = None):
-        return self.node.predict(X, max_depth)
+    def predict(self, X, include_val = False, max_depth = None):
+        return self.node.predict(X, include_val, max_depth)
         
     
